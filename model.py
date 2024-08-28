@@ -3,6 +3,7 @@ from math import log2
 
 import torch
 import torchquantum as tq
+import torch.utils.checkpoint as checkpoint
 
 
 def sim14_encoder(n_wires, layers=1):
@@ -89,13 +90,11 @@ class Quixer(torch.nn.Module):
 
         self.embedding_dim = embedding_dim
 
-        self.embedding = torch.nn.Embedding(vocab_size,
-                                            self.embedding_dim)
+        self.embedding = torch.nn.Embedding(vocab_size, self.embedding_dim)
 
         torch.nn.init.xavier_uniform_(self.embedding.weight)
 
-        self.emb2rot = torch.nn.Linear(in_features=self.embedding_dim,
-                                       out_features=self.n_rots)
+        self.emb2rot = torch.nn.Linear(in_features=self.embedding_dim, out_features=self.n_rots)
 
         self.dropout = torch.nn.Dropout(dropout)
         self.rot_sigm = torch.nn.Sigmoid()
@@ -143,23 +142,42 @@ class Quixer(torch.nn.Module):
 
         base_states = torch.zeros(bsz, 2 ** self.n_qubits, dtype=torch.complex64, device=self.device)
         base_states[:, 0] = 1.0
-        mixed_word = evaluate_polynomial_state(base_states,
-                                               word_params,
-                                               self.word_qencoder,
-                                               self.q_device,
-                                               self.n_qubits,
-                                               mix_coeffs,
-                                               self.poly_coeffs)
+        
+        # Checkpoint the evaluation of the polynomial state to save memory
+        mixed_word = checkpoint.checkpoint(
+            evaluate_polynomial_state,
+            base_states,
+            word_params,
+            self.word_qencoder,
+            self.q_device,
+            self.n_qubits,
+            mix_coeffs,
+            self.poly_coeffs
+        )
+        # mixed_word = evaluate_polynomial_state(base_states,
+        #                                        word_params,
+        #                                        self.word_qencoder,
+        #                                        self.q_device,
+        #                                        self.n_qubits,
+        #                                        mix_coeffs,
+        #                                        self.poly_coeffs)
 
         # [bsz, 2 ** n_qbs]
 
         final_probs = torch.linalg.vector_norm(mixed_word, dim=-1)
 
         self.q_device.set_states(torch.nn.functional.normalize(mixed_word, dim=-1))
-        self.qff(self.q_device, self.qff_params.repeat(1, bsz))
+
+        # Checkpoint the application of the quantum feedforward network
+        exps = checkpoint.checkpoint(
+            lambda q_device: self.qff(q_device, self.qff_params.repeat(1, bsz)),
+            self.q_device
+        )
 
         exps = self.measure_all_xyz(self.q_device)
         exps = exps.reshape(3, bsz, self.n_qubits).moveaxis(0,1).reshape(bsz, -1)
 
-        op = self.output_ff(exps)
+        # Checkpoint the output feedforward network if necessary
+        op = checkpoint.checkpoint(self.output_ff, exps)
+
         return op, torch.mean(final_probs)
