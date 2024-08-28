@@ -1,5 +1,6 @@
 import math
 import torch
+import torch.utils.checkpoint as checkpoint
 
 
 class PositionalEncoding(torch.nn.Module):
@@ -53,7 +54,8 @@ class Transformer(torch.nn.Module):
             torch.nn.Transformer.generate_square_subsequent_mask(x.shape[1],
                                                                  device=x.device)
 
-        x = self.transformer_encoder(x, mask=causal_mask)
+        # Apply gradient checkpointing to the transformer encoder
+        x = checkpoint.checkpoint(self.transformer_encoder, x, causal_mask)
 
         # Only return output of the final word
         return self.project(x[:, -1, :]), None
@@ -97,8 +99,9 @@ class FNet(torch.nn.Module):
         x = self.pos_enc(self.embedding(x))
 
         for ff, ln1, ln2 in zip(self.ffs, self.ln1s, self.ln2s):
-            x = ln1(torch.fft.fft2(x).real + x)
-            x = ln2(ff(x) + x)
+            # Apply gradient checkpointing to the Fourier transform and feedforward operations
+            x = checkpoint.checkpoint(lambda x: ln1(torch.fft.fft2(x).real + x), x)
+            x = checkpoint.checkpoint(lambda x: ln2(ff(x) + x), x)
 
         # Only return output of the final word
         return self.project(x[:, -1, :]), None
@@ -129,7 +132,8 @@ class LSTM(torch.nn.Module):
 
         x = self.embedding(x)
 
-        rnn_op, _ = self.rnn(x)
+        # Apply gradient checkpointing to the LSTM layers
+        rnn_op, _ = checkpoint.checkpoint(self.rnn, x)
 
         # Only return output of the final word
         return self.project(rnn_op[:, -1, :]), None
