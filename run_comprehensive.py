@@ -12,8 +12,6 @@ import torch
 
 from define_qlm import get_train_evaluate
 
-device_name = sys.argv[1] if len(sys.argv) >= 3 else 'cpu'
-
 
 quixer_hparams = {
     "qubits": 6,
@@ -101,7 +99,7 @@ model_map = {
 torch.backends.cudnn.deterministic = True
 
 
-device = torch.device(device_name)
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 print(f"Running on device: {device}")
 
 train_evaluate = get_train_evaluate(device)
