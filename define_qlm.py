@@ -8,7 +8,9 @@ from typing import Any, Optional, Tuple, Callable
 import numpy as np
 
 import torch
+
 import torchtext
+torchtext.disable_torchtext_deprecation_warning()
 
 from model import Quixer
 from ctransformer import Transformer, LSTM, FNet
