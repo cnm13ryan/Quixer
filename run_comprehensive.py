@@ -12,16 +12,15 @@ import torch
 
 from define_qlm import get_train_evaluate
 
-
 quixer_hparams = {
     "qubits": 6,
     "layers": 3,
     "ansatz_layers": 4,
     "window": 32,
-    "epochs": 30,
-    "restart_epochs": 30000,
+    "epochs": 5,
+    "restart_epochs": 1000,
     "dropout": 0.10,
-    "lr": 0.002,
+    "lr": 0.0015,
     "lr_sched": "cos",
     "wd": 0.0001,
     "eps": 1e-10,
@@ -33,12 +32,12 @@ quixer_hparams = {
 
 
 lstm_hparams = {
-    "layers": 2,
+    "layers": 4,
     "window": 32,
     "residuals": False,
-    "epochs": 30,
-    "restart_epochs": 30000,
-    "dropout": 0.30,
+    "epochs": 5,
+    "restart_epochs": 1000,
+    "dropout": 0.25,
     "lr": 0.002,
     "lr_sched": "cos",
     "wd": 0.0001,
@@ -50,10 +49,10 @@ lstm_hparams = {
 
 
 fnet_hparams = {
-    "layers": 2,
+    "layers": 4,
     "window": 32,
-    "epochs": 30,
-    "restart_epochs": 30000,
+    "epochs": 5,
+    "restart_epochs": 1000,
     "dropout": 0.10,
     "lr": 0.002,
     "lr_sched": "cos",
@@ -67,13 +66,13 @@ fnet_hparams = {
 
 
 vas_hparams = {
-    "layers": 1,
-    "heads": 1,
+    "layers": 4,
+    "heads": 4,
     "window": 32,
-    "epochs": 30,
-    "restart_epochs": 30000,
-    "dropout": 0.10,
-    "lr": 0.001,
+    "epochs": 5,
+    "restart_epochs": 1000,
+    "dropout": 0.15,
+    "lr": 0.0015,
     "lr_sched": "cos",
     "wd": 0.0001,
     "eps": 1e-10,

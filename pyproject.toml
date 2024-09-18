@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "Quixer"
+version = "0.0.0"
+package-mode = false
+description = "Quixer: A Quantum Transformer Model"
+readme = "README.md"
+
+# license = {file = "LICENSE"} 
+# authors = {file = "AUTHORS"}
+# classifiers = []
+# keywords = []
+
+[tool.poetry.dependencies]
+python = "^3.10" 
+torch = { version = "2.3.0", source = "pyg" }
+torchvision = { version = "*", source = "pyg" }
+torchtext = { version = "0.18.0", source = "pyg" }
+scikit-learn = "*"
+datasets = "*"
+qiskit = "*"
+qiskit-aer = "*"
+tqdm = "^4.64.1"
+
+[tool.poetry.urls]
+homepage = "https://github.com/cnm13ryan/Quixer"
+repository = "https://github.com/cnm13ryan/Quixer"
+
+[[tool.poetry.source]]
+name = "pyg"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
